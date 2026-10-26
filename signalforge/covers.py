@@ -1,8 +1,4 @@
-"""Personalized, reproducible 720-series editorial artwork.
-
-Each title produces a distinct but deterministic pattern. No invented photograph
-or documentary-looking scene is ever output.
-"""
+"""720-series cards with a repeatable pattern for each headline."""
 from __future__ import annotations
 from hashlib import sha256
 from io import BytesIO
@@ -22,7 +18,7 @@ def _font(size: int, bold: bool = False):
 
 
 def render_cover(headline: str, *, label: str = "Signal trace", demo: bool = False) -> bytes:
-    """Generate a unique 1200 × 627 card, seeded by headline and @aounali720."""
+    """Render a 1200 × 627 card using the headline and @aounali720 as the seed."""
     W, H = 1200, 627
     identity = sha256(("@aounali720|SF720|" + headline).encode("utf-8")).digest()
     rng = random.Random(int.from_bytes(identity[:8], "big"))
@@ -59,12 +55,12 @@ def render_cover(headline: str, *, label: str = "Signal trace", demo: bool = Fal
         draw.line(points, fill=palette, width=4, joint="curve")
         for p in points[::4]:
             draw.ellipse((p[0]-5,p[1]-5,p[0]+5,p[1]+5),fill=(235,244,247))
-    # Identity and asymmetric composition distinguish this from common SOC templates.
+    # Brand mark and headline placement.
     draw.polygon([(42,64),(62,44),(83,64),(62,85)], outline=palette, width=4)
     draw.text((98,46),"SIGNALFORGE", font=_font(35, True),fill=(230,243,251))
     draw.text((462,53),"/ 720",font=_font(29,True),fill=palette)
     draw.text((53,126),label.upper()[:32],font=_font(18,True),fill=palette)
-    words=(headline.strip() or "THREAT SIGNALS INTO EVIDENCE")[:150].split()
+    words=(headline.strip() or "SECURITY NOTES")[:150].split()
     lines=[]; current=""
     for word in words:
         trial=(current+" "+word).strip()
@@ -77,7 +73,7 @@ def render_cover(headline: str, *, label: str = "Signal trace", demo: bool = Fal
         draw.text((52,195+i*72),line,font=_font(49,True),fill=(248,251,255),stroke_width=0)
     draw.line((53,546,1140,546), fill=palette, width=2)
     draw.text((54,558),"AOUNSEC // @aounali720",font=_font(17,True),fill=(196,217,235))
-    draw.text((540,560),"SOURCE-LINKED  •  HUMAN-REVIEWED",font=_font(15),fill=(155,182,202))
+    draw.text((540,560),"SOURCE NOTES  •  REVIEW BEFORE SHARING",font=_font(15),fill=(155,182,202))
     if demo:
         draw.rectangle((930,570,1152,609),fill=(99,54,22))
         draw.text((945,578),"SYNTHETIC DEMO",font=_font(17,True),fill=(255,215,150))

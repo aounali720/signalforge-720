@@ -1,4 +1,4 @@
-"""Annotated ATT&CK-inspired hypotheses. These are NOT validated CVE detections."""
+"""Keyword-based ATT&CK worksheets for lab investigation."""
 from __future__ import annotations
 from dataclasses import dataclass
 from .models import ThreatRecord
@@ -45,17 +45,17 @@ def hypotheses(threat: ThreatRecord) -> list[Hypothesis]:
 
 def playbook(threat: ThreatRecord) -> str:
     lines = [f"# Detection hypothesis | {threat.title}", "",
-             "> Analyst learning notes only. Keyword-based ATT&CK mappings are hypotheses, not observed adversary behavior or tested detection rules.",
+             "> These keyword matches suggest what to investigate. They are not observed adversary behavior or tested detection rules.",
              "", f"Evidence: {threat.url}", f"Synthetic scenario: {'YES' if threat.is_demo else 'NO'}", ""]
     relevant = hypotheses(threat)
     if not relevant:
-        lines += ["No keyword-based detection hypothesis was found.",
-                  "Propose telemetry only after reading the original advisory and understanding the attack path."]
+        lines += ["No worksheet matches the keywords in this case.",
+                  "Read the original advisory, then choose logs that could help test your explanation."]
     else:
         for h in relevant:
             lines += [f"## {h.technique}", f"- ATT&CK tactic: {h.tactic}",
-                      f"- Telemetry to consider: {h.telemetry}", f"- Triage question: {h.analyst_question}",
-                      f"- Safe validation exercise: {h.lab_exercise}", ""]
+                      f"- Logs to review: {h.telemetry}", f"- Triage question: {h.analyst_question}",
+                      f"- Lab exercise: {h.lab_exercise}", ""]
     lines += ["## Validation checklist", "- [ ] Confirm product/version relevance",
               "- [ ] Verify telemetry exists and collection is permitted",
               "- [ ] Reproduce benign test event in an isolated lab",

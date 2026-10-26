@@ -1,6 +1,7 @@
-"""Auditable-looking but not cryptographically signed case exports.
-SHA-256 makes accidental modifications detectable if a trusted hash is kept separately.
-It is NOT proof of when the case was created or that data was externally verified.
+"""Case exports with source links, notes, and a SHA-256 checksum.
+
+Keep the expected checksum separately to detect later changes. It does not
+authenticate the author, establish a creation time, or verify the source data.
 """
 from __future__ import annotations
 from datetime import datetime, timezone
@@ -61,25 +62,25 @@ def evidence_packet(record: ThreatRecord, assets: list[AssetRecord], *, now: dat
 
 def packet_markdown(packet: dict) -> str:
     source, triage = packet["source"], packet["triage"]
-    lines = [f"# {packet['case_id']} · Analyst evidence packet", "",
+    lines = [f"# {packet['case_id']} · Case notes and evidence", "",
              f"**Classification:** {packet['classification']}",
              f"**Generated (UTC):** {packet['created_utc']}",
              f"**Title:** {source['title']}", f"**Publisher:** {source['publisher']}",
              f"**Primary URL:** {source['url']}", f"**CVE:** {source['cve'] or 'Not stated'}", "",
              "## Triage", f"- Status: {triage['status']}",
-             f"- Heuristic: {triage['heuristic_priority']} ({triage['priority_score']}/100)",
+             f"- Review priority: {triage['heuristic_priority']} ({triage['priority_score']}/100)",
              f"- Reasons: {triage['rationale']}", f"- Notes: {triage['analyst_notes'] or 'None recorded'}", "",
-             "## Inventory intersections (operator-declared, NOT validated exposure)"]
+             "## Inventory matches (operator-declared CVEs; asset versions not verified)"]
     for row in packet["declared_inventory_intersections"]:
         lines.append(f"- {row['asset_id']} · {row['declared_cve']} · Review score {row['review_score']}/100 · {row['warning']}")
     if not packet["declared_inventory_intersections"]:
-        lines.append("- None declared. This does not establish that assets are unaffected.")
-    lines += ["", "## Detection hypotheses (not observed techniques)"]
+        lines.append("- No declared CVE matches. Check asset versions separately; an empty list does not establish that they are unaffected.")
+    lines += ["", "## Detection ideas (not observed techniques)"]
     for h in packet["detection_hypotheses"]:
         lines.append(f"- **{h['technique']}** — Telemetry: {h['telemetry']}. Question: {h['analyst_question']}")
     if not packet["detection_hypotheses"]:
-        lines.append("- None automatically suggested; inspect the advisory manually.")
-    lines += ["", "## Suggested control/evidence references"]
+        lines.append("- No keyword matches. Read the advisory and decide which logs to review.")
+    lines += ["", "## Control references to review"]
     for c in packet["suggested_control_evidence"]:
         lines.append(f"- **{c['reference']}** · {c['topic']}: {c['evidence_needed']}")
     lines += ["", "## Investigation checklist"]

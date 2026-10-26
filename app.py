@@ -22,7 +22,7 @@ from signalforge.evidence import case_id, evidence_packet, packet_markdown, pack
 from signalforge.export import safe_csv
 
 load_dotenv()
-st.set_page_config(page_title="SignalForge 720 | Threat-to-Evidence Lab", page_icon="🔷", layout="wide")
+st.set_page_config(page_title="SignalForge 720 | SOC Lab", page_icon="🔷", layout="wide")
 
 st.markdown("""
 <style>
@@ -38,18 +38,18 @@ st.markdown("""
 """, unsafe_allow_html=True)
 init_db()
 
-st.markdown('<div class="sf720-brand"><div class="sf720-code">AOUNSEC // PROJECT 720 · BLUE-TEAM ENGINEERING</div><h1 style="margin:.4rem 0">SIGNALFORGE <span style="color:#24b9ed">720</span></h1><span style="opacity:.83">From threat signals to defensible evidence · Built for SOC + detection + GRC</span></div>', unsafe_allow_html=True)
-st.caption("Independent portfolio lab by @aounali720 · No automated proof of compromise or compliance certification")
+st.markdown('<div class="sf720-brand"><div class="sf720-code">AOUNSEC / PROJECT 720</div><h1 style="margin:.4rem 0">SIGNALFORGE <span style="color:#24b9ed">720</span></h1><span style="opacity:.83">Review advisories, keep investigation notes, and work through lab cases.</span></div>', unsafe_allow_html=True)
+st.caption("A local SOC practice lab by @aounali720")
 
 with st.sidebar:
     st.header("Data collection")
-    st.caption("Live sync only runs on demand. No automatic scraping or posting.")
+    st.caption("Sources refresh when you click Sync live sources.")
     period = st.slider("Look back for CISA KEV additions (days)", 7, 120, 45)
     use_kev = st.checkbox("CISA KEV", True)
     use_news = st.checkbox("Security news feeds", True)
     use_epss = st.checkbox("FIRST EPSS probability", True)
     if st.button("↻ Sync live sources", type="primary", width="stretch"):
-        with st.spinner("Retrieving public source metadata…"):
+        with st.spinner("Fetching advisories and news…"):
             records, errors = collect(days=period, use_kev=use_kev, use_rss=use_news, use_epss=use_epss)
             count = upsert(records)
         if count:
@@ -64,7 +64,7 @@ with st.sidebar:
         st.success("4 synthetic cases and 3 fictional lab assets added.")
     st.divider()
     st.caption("Version " + __version__ + " · API keys stay in your environment; do not commit .env")
-    st.caption("Priority is a teaching heuristic, NOT CVSS, and does not establish impact on your assets.")
+    st.caption("Priority sets the review order. It is not CVSS or a finding about your assets.")
 
 if st.session_state.pop("triage_saved", False):
     st.success("Triage decision saved locally. Queue and evidence updated.")
@@ -75,7 +75,7 @@ all_records = list_threats()
 real_records = [r for r in all_records if not r.is_demo]
 demo_count = sum(r.is_demo for r in all_records)
 if demo_count:
-    st.warning(f"Training mode: {demo_count} synthetic scenarios are stored. Filter them out before publishing a live briefing.", icon="⚠️")
+    st.warning(f"Training mode: {demo_count} synthetic scenarios are stored. Keep them out of reports about current threats.", icon="⚠️")
 if not all_records:
     st.info("No records yet. Choose **Sync live sources** or **Load 720 signature lab** on the left to begin.")
 
@@ -87,15 +87,15 @@ metrics[3].metric("Under investigation", sum(r.status == "Investigating" for r i
 metrics[4].metric("Training records", demo_count)
 
 overview, queue, exposure, detection, binder, briefing, creator, methodology = st.tabs([
-    "◈ Signal Board", "🔎 Analyst Queue", "🧬 Exposure Lab", "🎯 Detection Lab",
-    "📁 Evidence Binder", "📋 Daily Brief", "✍️ Content Studio", "📖 Methodology"
+    "Signal Board", "Analyst Queue", "Exposure Lab", "Detection Lab",
+    "Evidence Binder", "Daily Brief", "Content Studio", "Methodology"
 ])
 
 with overview:
-    st.subheader("Intelligence at a glance")
+    st.subheader("Overview")
     st.caption(f"{len(real_records)} public-source records · {demo_count} training scenarios · Refresh runs only when requested.")
     if not all_records:
-        st.markdown("**Start your analyst workflow:** load the signature lab → triage a case → review declared assets → export an evidence packet.")
+        st.markdown("Try the lab first: open a case in Analyst Queue, save a note, then export it from Evidence Binder.")
     if all_records:
         left, right = st.columns([1, 1])
         with left:
@@ -108,8 +108,8 @@ with overview:
             if len(sources):
                 st.bar_chart(sources)
             else:
-                st.caption("Sync live sources to display publisher distribution.")
-        st.subheader("Recent top-priority records")
+                st.caption("Sync sources to see records by publisher.")
+        st.subheader("Highest-priority public records")
         display = pick(real_records, 8)
         if display:
             st.dataframe(pd.DataFrame([{
@@ -118,10 +118,10 @@ with overview:
             } for r in display]), hide_index=True, width="stretch",
                 column_config={"Advisory": st.column_config.LinkColumn("Source", display_text="Open source")})
         else:
-            st.info("Live data not loaded; training records are not included in this overview.")
+            st.info("No public records loaded yet. Training cases are shown in Analyst Queue with the Demo filter.")
 
 with queue:
-    st.subheader("Triage workbench")
+    st.subheader("Case queue")
     col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
     with col1:
         query = st.text_input("Search CVE / product / topic", placeholder="e.g. VPN, ransomware")
@@ -157,7 +157,7 @@ with queue:
             st.markdown(f"**Published:** `{record.published_at}` · **CVE:** `{record.cve or 'not provided'}`")
             st.markdown(f"**CISA KEV:** `{'Simulated for training' if record.is_demo and record.kev else record.kev}` · **EPSS:** `{f'{record.epss:.4f}' if record.epss is not None else 'not available'}`")
             st.markdown(f"**Heuristic priority:** **{record.priority}** ({record.priority_score}/100)")
-            st.caption("Evidence for priority: " + record.rationale)
+            st.caption("Score breakdown: " + record.rationale)
         with action:
             st.markdown("#### Investigation journal")
             with st.form("triage_" + record.key):
@@ -174,9 +174,9 @@ with queue:
 
 
 with exposure:
-    st.subheader("Asset × advisory intersection")
-    st.caption("Unique 720 workflow: link operator-declared CVEs to lab asset inventory. Matching an ID NEVER establishes actual vulnerability or exploitation.")
-    st.warning("Do not upload confidential production inventories here or commit generated SQLite data to GitHub. Use fictional lab identifiers for public demos.")
+    st.subheader("Inventory CVE matches")
+    st.caption("Matches use the CVE IDs you enter in the inventory. Check product versions before treating a match as a vulnerability.")
+    st.warning("Use fictional assets for public demos. Keep private inventories and database files out of Git.")
     asset_list = list_assets()
     x, y = st.columns([1.2, 1])
     with x:
@@ -193,7 +193,7 @@ with exposure:
     with y:
         st.markdown("**CSV columns**")
         st.code("asset_id,product,environment,internet_exposed,criticality,known_cves,owner", language="text")
-        st.caption("Multiple operator-declared CVEs are separated by semicolons; sample asset file is in assets/example-inventory.csv")
+        st.caption("Separate CVEs with semicolons. See assets/example-inventory.csv for an example.")
     if asset_list:
         st.dataframe(pd.DataFrame([{
             "Asset": a.asset_id, "Product": a.product, "Environment": a.environment,
@@ -202,18 +202,18 @@ with exposure:
         } for a in asset_list]), hide_index=True, width="stretch")
         matches = find_matches(all_records, asset_list)
         if matches:
-            st.markdown("**Investigations requiring verification**")
+            st.markdown("**Matches to review**")
             st.dataframe(pd.DataFrame([{k: v for k,v in m.items() if k not in ("source", "warning")}
                                       for m in matches]), hide_index=True, width="stretch")
-            st.caption("The 0–100 review score is a teaching heuristic based on advisory priority, declared internet exposure and declared criticality; it is NOT a CVSS or risk rating.")
+            st.caption("Review score combines advisory priority with the exposure and criticality you entered. It is not CVSS or a verified risk rating.")
         else:
-            st.info("No exact declared CVE intersections. This is not proof that any asset is safe.")
+            st.info("No matching CVEs in this inventory. This does not establish that the assets are unaffected.")
     else:
-        st.info("Load the 720 signature lab or import your own lab asset CSV to explore intersections.")
+        st.info("Load the lab or import an asset CSV to see CVE matches.")
 
 with detection:
-    st.subheader("Hypothesis-driven detection design")
-    st.caption("Practice connecting a headline to telemetry and a reproducible benign lab validation. Mapping to ATT&CK does not prove observed adversary activity.")
+    st.subheader("Detection worksheets")
+    st.caption("These suggestions come from keywords in the case. Use them to plan log checks and safe lab exercises; they do not establish observed ATT&CK activity.")
     if all_records:
         by_key = {r.key: r for r in all_records}
         selection_key = st.selectbox("Select a case for a detection workbook", list(by_key),
@@ -230,7 +230,7 @@ with detection:
                     st.write(f"**Analyst question:** {hyp.analyst_question}")
                     st.write(f"**Safe exercise:** {hyp.lab_exercise}")
         else:
-            st.info("No automatic hypothesis. Read the primary source and develop a manual data-source hypothesis.")
+            st.info("No keyword match for this case. Read the advisory and decide which logs could help investigate it.")
         workbook = playbook(selected)
         st.download_button("Download detection worksheet", workbook,
                            file_name=f"{case_id(selected)}_detection_workbook.md", mime="text/markdown")
@@ -238,8 +238,8 @@ with detection:
         st.info("Load the 720 signature lab or sync live advisories first.")
 
 with binder:
-    st.subheader("Evidence and control binder")
-    st.caption("Create an attributable case file linking triage, operator-declared assets, detection hypotheses, and suggested ISO/NIST review evidence.")
+    st.subheader("Case reports")
+    st.caption("Export your notes with source links, inventory matches, detection ideas and ISO/NIST evidence prompts.")
     if all_records:
         available = {r.key: r for r in all_records}
         sel_key = st.selectbox("Select investigation", list(available),
@@ -255,13 +255,13 @@ with binder:
         with right:
             st.download_button("Export JSON + SHA-256 digest", packet_json(packet),
                                file_name=f"{case_id(chosen_case)}_evidence.json", mime="application/json", width="stretch")
-        st.caption("SHA-256 supports local integrity comparison only; this is not a digital signature, proof of review, or a formal compliance assessment.")
+        st.caption("Keep a trusted copy of the SHA-256 digest to check later changes. It does not authenticate the author or certify a review.")
     else:
         st.info("Load synthetic cases or sync public sources first.")
 
 with briefing:
-    st.subheader("Source-linked daily intelligence brief")
-    st.caption("Source excerpts only. Publish after verifying each original advisory and affected assets.")
+    st.subheader("Daily brief")
+    st.caption("Choose a date window and review the linked advisories before sharing.")
     include_demo = st.checkbox("Include training scenarios in the brief (clearly labeled)", False, key="brief_demo")
     candidates = all_records if include_demo else real_records
     brief_window = st.select_slider("Published within last", options=[1, 3, 7, 14, 30], value=3, format_func=lambda x: f"{x} days")
@@ -275,8 +275,8 @@ with briefing:
         st.download_button("Export selected records as CSV", export, file_name="signalforge_triage.csv", mime="text/csv", width="stretch")
 
 with creator:
-    st.subheader("Publishable analysis · review required")
-    st.caption("Generate content grounded in selected source records, with links appended automatically. No auto-publishing.")
+    st.subheader("Post drafts and graphics")
+    st.caption("Prepare a draft from selected cases. Source links are included; review the text before sharing. Nothing is posted automatically.")
     include_demo_post = st.checkbox("Show synthetic scenarios in Content Studio", False)
     candidates = all_records if include_demo_post else real_records
     if candidates:
@@ -292,7 +292,7 @@ with creator:
         st.session_state["draft_context"] = draft_context
         if not provider.startswith("Offline"):
             st.caption("Selected source titles and excerpts will be sent to the writing provider. Review sensitive text before generating.")
-        if st.button("Generate source-grounded LinkedIn draft", disabled=not chosen, type="primary"):
+        if st.button("Draft LinkedIn post", disabled=not chosen, type="primary"):
             try:
                 post = linkedin_template(chosen) if provider.startswith("Offline") else ai_linkedin(chosen, provider)
                 st.session_state["tp_post"] = post
@@ -306,7 +306,7 @@ with creator:
         default_title = chosen[0].title if chosen else "Threat Intelligence Daily Brief"
         headline = st.text_input("Card headline", value=default_title[:100])
         label = st.selectbox("Graphic style", ["Signal trace", "Grid pulse", "Orbit rings"])
-        st.caption("Visual motifs are deterministically varied using a fingerprint of each headline and the 720 studio mark.")
+        st.caption("Each headline produces a repeatable pattern with the 720 mark.")
         graphic_context = (headline, label, tuple((r.key, r.is_demo) for r in chosen))
         if st.session_state.get("graphic_context") != graphic_context:
             st.session_state.pop("tp_graphic", None)
@@ -314,7 +314,7 @@ with creator:
         st.session_state["graphic_context"] = graphic_context
         if st.button("Make clean editorial card"):
             st.session_state["tp_graphic"] = render_cover(headline, label=label, demo=any(r.is_demo for r in chosen))
-            st.session_state["tp_graphic_label"] = "Original editorial design (not an AI photograph)"
+            st.session_state["tp_graphic_label"] = "Generated card design"
         if st.button("Generate optional OpenAI concept artwork (paid API)"):
             try:
                 st.session_state["tp_graphic"] = openai_concept_image(headline)
@@ -328,21 +328,19 @@ with creator:
         st.info("Sync live sources first, or explicitly enable synthetic training records.")
 
 with methodology:
-    st.subheader("What this system does—and does not—claim")
+    st.subheader("How to read the results")
     st.markdown("""
-**Pipeline:** CISA KEV + RSS → FIRST EPSS → transparent queue → declared asset/CVE intersection → ATT&CK-inspired hypothesis worksheet → SHA-256 case evidence packet → reviewable posts.
+**Sources and freshness.** Live sync fetches CISA KEV, RSS excerpts and optional FIRST EPSS data. It runs on request. Records stay in SQLite so another sync preserves investigation notes. Briefs exclude records with unknown or future publication dates.
 
-- **CISA KEV** means exploitation has been observed in the wild; it does **not** prove your organization was affected.
-- **EPSS** estimates probability of exploitation activity in the next 30 days. It is **not** a CVSS severity rating.
-- **RSS articles** are publisher summaries, not independently verified incident evidence. A mentioned CVE is not proof of exploitation.
-- **Priority score (0–100)** is a teaching heuristic: KEV +70, CISA-known ransomware +12, EPSS up to +18, or metadata keyword matching. It is not a production risk rating.
-- **Human-in-the-loop:** Analysts confirm vendor advisories, asset exposure, remediation, timestamps, and third-party content rights before posting.
-- **Exposure lab:** matches explicitly declared CVEs only. It does not scan assets or validate vulnerable versions. Asset data is local and must not be committed to public GitHub.
-- **Detection lab:** keyword mappings are speculative hypotheses, not observed ATT&CK techniques, real alerts, or validated rules.
-- **Evidence binder:** control suggestions are not certification; SHA-256 is a consistency check, not a digital signature.
-- **Source safety:** no web-page scripts are executed, full news articles are not scraped, secrets are kept out of the database, and all AI content must be checked.
-- **Data freshness:** refresh manually. Items persist so analyst notes survive another sync.
+**Priority scores.** KEV adds 70 points, reported ransomware use adds 12, and EPSS adds up to 18. For non-KEV records, keyword matches add up to 24 and a CVE mention adds 6. The score orders the queue; it is not CVSS or a business risk rating. EPSS estimates the probability of exploitation activity in the next 30 days.
 
-**Portfolio talking points:** API ingestion, parsing and normalization, evidence provenance, analytic heuristics, data persistence, error handling, threat triage, human review, safe LLM integration and testing.
+**Inventory matches.** Matches compare CVE IDs from the case and your uploaded CSV. The app does not scan assets, verify product versions or confirm exploitation. KEV membership means exploitation has been observed somewhere; it does not establish that your own assets were affected.
+
+**Detection worksheets.** ATT&CK suggestions come from keyword matches. Check that the proposed logs exist, test with benign lab events, and record coverage gaps and false positives before relying on a detection.
+
+**Case reports.** ISO 27001 and NIST CSF references suggest evidence to collect. They are not compliance findings. The SHA-256 digest can help detect changes if you keep a trusted copy; it is not a digital signature or an audit trail.
+
+**Drafts and artwork.** Optional writing calls send selected source titles and excerpts to the provider; artwork calls send your headline. Keep private information out of those inputs. Check claims, links and usage rights before publishing. AI-generated artwork is labeled, and the app never posts for you.
+
 """)
-    st.caption("Developed as a demonstrable SOC/GRC learning platform; not a commercial threat intelligence service.")
+    st.caption("Built by @aounali720. Case notes and imported assets are stored locally.")

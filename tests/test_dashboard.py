@@ -22,7 +22,7 @@ def test_dashboard_demo_triage_and_draft_lifecycle(tmp_path, monkeypatch):
     assert any(r.status == 'Investigating' and r.analyst_notes == 'Verify declared lab assets'
                for r in list_threats())
     next(c for c in app.checkbox if c.label == 'Show synthetic scenarios in Content Studio').check().run()
-    next(b for b in app.button if b.label == 'Generate source-grounded LinkedIn draft').click().run()
+    next(b for b in app.button if b.label == 'Draft LinkedIn post').click().run()
     assert 'synthetic' in app.session_state['tp_post'].lower()
     app.multiselect[0].set_value([]).run()
     assert not any(t.label == 'Review and edit before publishing' for t in app.text_area)
@@ -40,7 +40,7 @@ def test_dashboard_withholds_provider_error_details(tmp_path, monkeypatch):
     app.sidebar.button[1].click().run()
     next(c for c in app.checkbox if c.label == 'Show synthetic scenarios in Content Studio').check().run()
     next(s for s in app.selectbox if s.label == 'Writing engine').select('OpenAI').run()
-    next(b for b in app.button if b.label == 'Generate source-grounded LinkedIn draft').click().run()
+    next(b for b in app.button if b.label == 'Draft LinkedIn post').click().run()
     assert not app.exception
     assert any('Draft generation failed' in e.value for e in app.error)
     assert all('PRIVATE_PROVIDER_RESPONSE_SENTINEL' not in e.value for e in app.error)

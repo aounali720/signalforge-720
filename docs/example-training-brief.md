@@ -1,21 +1,21 @@
 # SignalForge 720 Training Brief — SYNTHETIC
 
-> **TRAINING EXERCISE ONLY:** This example illustrates the reporting format. Nothing below represents a real breach, exploited CVE, or vendor advisory.
+> This is a reporting example using fictional data. It does not describe a real breach, exploited CVE, or vendor advisory.
 
-**Dataset:** Four fictional scenarios imported through `python -m signalforge.cli demo`.
+The demo command, `python -m signalforge.cli demo`, imports four scenarios. Two are summarized here.
 
-## Scenario 1 — Fictional VPN authentication bypass
+## Fictional VPN authentication bypass
 
-- **Evidence type:** simulated training description
-- **Triage interpretation:** simulated KEV and ransomware flags to test the scoring model
-- **What a real analyst would do:** independently verify CISA KEV membership, vendor patches, exposed devices and SIEM evidence
-- **Case next step:** inventory internet-facing VPN services and investigate logs if applicable
+The case uses simulated KEV and ransomware flags to exercise the scoring model. In a real investigation, check the CISA entry, vendor guidance, internet-facing devices, and available logs before drawing a conclusion.
 
-## Scenario 2 — Simulated ransomware alert
+**Next step:** identify the relevant VPN services in the inventory and decide which logs would help verify the advisory's relevance.
 
-- **Evidence type:** fictional behavioral indicator narrative
-- **What a real analyst would do:** preserve logs and determine whether genuine file-encryption activity occurred
+## Simulated ransomware alert
 
-## Limitations
+The case describes fictional file-encryption activity. It is a prompt for investigation, not a finding from collected telemetry.
 
-This report is not a current public threat assessment. Generate a fresh report from live feeds in the app for evidence-linked real advisories and manually check original sources before distributing.
+**Next step:** identify which file and process events would be needed, preserve the relevant logs, and check whether they support the hypothesis.
+
+## Using live data
+
+Generate a new brief from live feeds to review current advisories. Check the linked original sources before sharing it; this training example should remain labeled as synthetic.

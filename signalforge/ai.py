@@ -1,4 +1,4 @@
-"""Optional AI copywriting integrations; all claims grounded in selected source excerpts."""
+"""Optional AI writing providers using selected source excerpts."""
 from __future__ import annotations
 import os
 import requests
@@ -12,7 +12,7 @@ SYSTEM = (
     "affected organizations, exploitation, patches, statistics, dates, or links. "
     "Differentiate official CISA KEV confirmation from news reporting. "
     "Never describe a triage priority as CVSS or an exploit probability. "
-    "Use natural professional prose, short paragraphs, one practical lesson, 2-4 hashtags. "
+    "Write short, specific paragraphs. Skip promotional openings, generic takeaways, and inflated claims. Do not imply personal experience or completed investigation that the records do not establish. Do not add hashtags unless requested. "
     "Do not write a source list; the app appends one. No markdown fences."
 )
 
@@ -63,7 +63,7 @@ def ai_linkedin(records: list[ThreatRecord], provider: str, *, session: requests
     chosen = pick(records, 5)
     if not chosen:
         raise ValueError("Select at least one record.")
-    prompt = ("Write a 150-220 word cybersecurity LinkedIn post from these analyst observations. "
+    prompt = ("Draft a short LinkedIn post from the selected source records. Use only the space needed to explain what they report and what still needs checking. "
               "Avoid exaggerated language, unnatural opening hooks and invented material. "
               "If data is synthetic, begin with a clear TRAINING EXERCISE label.\n\n"
               f"training_data: {any(r.is_demo for r in chosen)}\n" + source_context(chosen))
@@ -77,5 +77,5 @@ def ai_linkedin(records: list[ThreatRecord], provider: str, *, session: requests
         raise RuntimeError("AI provider returned an empty response")
     if any(r.is_demo for r in chosen) and not body.lstrip().upper().startswith("TRAINING"):
         body = "TRAINING EXERCISE — synthetic records, not current threat news.\n\n" + body
-    citations = "\n\nOriginal sources (review before publishing):\n" + "\n".join(dict.fromkeys(r.url for r in chosen))
+    citations = "\n\nSources (check before sharing):\n" + "\n".join(dict.fromkeys(r.url for r in chosen))
     return body + citations
