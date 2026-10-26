@@ -1,35 +1,40 @@
-# SignalForge 720 · @aounali720 portfolio kit
+# SignalForge 720 · @aounali720 portfolio notes
 
-**GitHub repo suggestion:** `signalforge-720`
+**Repository:** [aounali720/signalforge-720](https://github.com/aounali720/signalforge-720)
 
-**GitHub tagline:** From threat signals to defensible SOC evidence. A source-based analyst workbench with declared CVE/asset intersections, ATT&CK-inspired detection workbooks and integrity-checkable case packets.
+**Short description:** A local SOC practice app for reviewing public advisories, keeping case notes, and testing investigation ideas with fictional lab data.
 
 **Topics:** `cybersecurity`, `soc-analyst`, `python`, `threat-intelligence`, `cisa-kev`, `epss`, `detection-engineering`, `grc`, `streamlit`
 
-## CV project entry (use after you verify it on your own laptop)
+## CV entry
 
-**SignalForge 720 — Threat-to-Evidence SOC Portfolio Lab** | Python, Streamlit, SQLite, CISA KEV, FIRST EPSS, MITRE ATT&CK concepts
+Use this after running the project yourself. Adjust the wording to match the work you can explain and demonstrate.
 
-- Engineered an explainable security intelligence workbench combining public vulnerability advisories, EPSS data, and an analyst triage queue with persistent notes and case identifiers.
-- Developed an operator-declared asset/CVE intersection workflow and ATT&CK-inspired detection worksheets for safe lab investigation and reproducible analyst documentation.
-- Built source-attributed Markdown/JSON evidence packets with SHA-256 consistency hashes, suggested ISO 27001/NIST CSF evidence prompts, offline testing, and optional human-reviewed AI writing.
+**SignalForge 720 — SOC practice lab** | Python, Streamlit, SQLite, CISA KEV, FIRST EPSS, MITRE ATT&CK concepts
 
-Do **not** claim that this performed production threat hunting, found real vulnerable hosts, passed an ISO audit, or deployed validated MITRE detections unless you independently perform and substantiate those actions.
+- Built a Streamlit dashboard that imports public advisories and EPSS data, ranks records for review, and saves case notes in SQLite.
+- Added CSV asset declarations, exact CVE matching, and detection worksheets with telemetry questions and benign lab exercises.
+- Added Markdown and JSON case exports with source links, SHA-256 checksums, and ISO 27001/NIST CSF evidence prompts. Covered the offline workflow with automated tests.
 
-## LinkedIn announcement draft
+The project also supports optional AI drafting, which requires review before use. Keep claims about production deployments, real investigations, detection accuracy, or audit results separate from what this lab demonstrates.
 
-I built **SignalForge 720**, a blue-team portfolio project inspired by the gap between reading threat intelligence and documenting a defensible SOC investigation.
+## LinkedIn draft
 
-The workflow is intentionally end-to-end: ingest public security sources, prioritize with explainable logic, intersect advisories with **declared** lab CVEs, build detection hypotheses, and export an evidence-backed case file.
+SignalForge 720 is a Python and Streamlit project for practicing the work that follows a security advisory.
 
-I designed a fictional 720 lab scenario pack for safe demonstrations and highlighted the boundaries between a reported vulnerability, an analyst hypothesis, and proof of an affected asset. The project also includes a local content studio for source-linked summaries and headline-specific editorial graphics.
+It brings CISA KEV entries, EPSS data, and publisher feeds into one queue. From there, an analyst can save triage notes, compare CVE IDs with a declared lab inventory, work through a detection hypothesis, and export the case as Markdown or JSON.
 
-Stack: Python · Streamlit · SQLite · REST/JSON · CISA KEV · FIRST EPSS · pytest · GitHub Actions
+The offline demo has four fictional cases and three lab assets. That makes it possible to walk through the app without API keys or live feeds. Demo records stay labeled throughout the workflow.
 
-GitHub: [replace with your actual public repository URL]
+The Content Studio includes a free post template, headline-based graphics, and optional AI drafting. Nothing is posted automatically.
 
-#SOCAnalyst #BlueTeam #ThreatIntelligence #DetectionEngineering
+Stack: Python, Streamlit, SQLite, REST/JSON, pytest, GitHub Actions
 
-## Evidence for the GitHub page
+GitHub: https://github.com/aounali720/signalforge-720
 
-Capture **real screenshots from your own running app** of the Signal Board, the fictional Exposure Lab, the Detection Lab workbook, and the Evidence Binder case JSON/Markdown, showing clear "synthetic" labels. Add a short GIF/video of triage notes surviving a source refresh. The brand image in `assets/portfolio-cover.png` is an illustration, not an actual application screenshot.
+
+## Screenshots and demo material
+
+Capture the app while it is running: the Signal Board, Exposure Lab, a Detection Lab worksheet, and an Evidence Binder export. Leave the synthetic-data labels visible. A short recording of a note surviving a source refresh is useful evidence of persistence.
+
+The cover in `assets/portfolio-cover.png` is an illustration. Use actual app captures when showing the interface.

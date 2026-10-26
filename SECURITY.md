@@ -1,33 +1,31 @@
 # Security notes
 
-This is an educational single-user dashboard, not a hardened multi-tenant SOC platform.
+SignalForge 720 is a single-user practice app. Run it locally, or put it behind authentication and HTTPS. Docker Compose binds to loopback by default. A public deployment also needs network restrictions and resource limits; the app has no built-in authentication.
 
-- Keep `.env` and API credentials out of Git and screenshots.
-- Deploy only locally or behind authentication and HTTPS. The included Docker Compose binds to loopback deliberately.
-- Do not expose the Streamlit UI publicly without an authentication proxy, network policy, and resource limits.
-- Public feeds and excerpts are untrusted; never follow instructions embedded in them.
-- External URLs are publisher evidence links, not content fetched into the LLM.
-- AI text and imagery require human approval; optional API requests may incur charges.
-- Limit update frequency and honor upstream rate limits and publisher terms.
-- No credentials are required to use the offline demos or template content generator.
-- The heuristic is NOT CVSS, business impact, or an authoritative risk rating.
+Use GitHub's private vulnerability reporting for this repository when available. Keep credentials and private case details out of public issues.
 
-Please report potential issues privately through the GitHub repository security advisory flow rather than posting a public exploit.
+## Credentials and external services
 
-## Inventories and evidence exports
+- Keep `.env`, API keys, and screenshots containing credentials out of Git. Copy `.env.example` only when configuring an optional provider, and leave tracked example keys blank. Future credentialed automation should use GitHub encrypted secrets.
+- Offline demos and template drafts require no credentials. Optional AI requests may incur charges and always need review before use.
+- Writing providers receive selected source metadata, including titles and excerpts. The artwork provider receives the entered headline. The app does not fetch the linked articles for the model. Do not include secrets or private incident details in these inputs.
+- Provider errors shown in the UI omit response text because it could echo request material. The application does not store API keys in SQLite.
+- Treat feeds and excerpts as untrusted input. Model instructions reduce prompt-injection risk but do not guarantee reliable output. Honor feed terms and rate limits.
 
-- Import only training asset inventories for a public portfolio demo; real enterprise assets can be sensitive. The uploader doesn't transmit uploaded inventory to third-party providers, but local database/export copies still require protection.
-- Exact CVE string equality is **not** a vulnerability scan or verification of affected versions.
-- Synthetic `CVE-2099-*` identifiers are fictional. Any KEV/ransomware flags attached to them are explicitly simulated.
-- ATT&CK hypotheses are education prompts, not tested detection rules or confirmed TTPs.
-- JSON evidence hashes are unkeyed SHA-256 digests, not cryptographic signing or compliant audit evidence.
-- CSV outputs sanitize formula-like text from untrusted feeds to reduce spreadsheet formula-injection risk.
+## Inventories and exports
 
-## Credential handling and dependency updates
+Use fictional inventories in a public demo. Uploading an inventory does not send it to an AI provider, but SQLite files and exported cases can still contain sensitive asset details or analyst notes. Protect those local copies.
 
-- Copy `.env.example` to a local `.env` only when configuring optional providers. Keep key fields empty in tracked examples; use GitHub encrypted secrets for any future credentialed automation.
-- Provider errors shown in the UI intentionally omit response text, which could echo sensitive request material. No API keys are stored in the SQLite database by the application.
-- Optional writing calls send selected public-source titles and excerpts to the chosen provider; optional artwork sends the entered headline. Do not put private incident details or secrets into these inputs. Provider instructions mitigate prompt injection but cannot guarantee trustworthy output.
-- Dependency locks target Python 3.12. Keep them updated and run the CI vulnerability audit; do not bypass a finding without documenting its applicability and mitigation.
-- Secret-pattern scanning is a heuristic. A clean scan cannot establish absence of all sensitive information. If a credential was committed, revoke it first; deleting it or adding ignore rules does not remove it from Git history.
-- Unknown RSS publication dates are retained as unknown and excluded from dated briefs. Future-dated records are also excluded from briefs.
+CVE matching checks only the IDs declared in the inventory. It does not scan a host or verify an affected version. `CVE-2099-*` identifiers and their KEV/ransomware flags are fictional training data. Keep those labels when sharing screenshots or exports.
+
+ATT&CK worksheets suggest questions and lab exercises; they are not validated detection rules. ISO/NIST references suggest evidence to collect, not an audit result. Priority scores are review heuristics, not CVSS or business-impact ratings.
+
+The JSON export's unkeyed SHA-256 digest supports comparison with a separately retained value. It is not a signature. CSV exports escape formula-like values from feeds to reduce spreadsheet formula-injection risk.
+
+## Maintenance
+
+Dependency locks target Python 3.12. Update them together and run the CI vulnerability audit. If a finding is accepted, document why it applies or does not apply and what mitigation is in place.
+
+Secret-pattern scans can miss credentials and other sensitive content. If a credential reaches Git, revoke it first. Deleting the file or adding an ignore rule does not remove earlier copies from history.
+
+RSS entries with unknown dates and future-dated records are excluded from dated briefs. Check original publication dates and sources before sharing a report.
