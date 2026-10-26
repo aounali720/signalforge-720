@@ -89,7 +89,7 @@ def list_threats(path: str | Path | None = None, *, search: str = "", priority: 
     if search:
         clauses.append("(title LIKE ? OR summary LIKE ? OR cve LIKE ?)")
         # Defensively escape LIKE meta characters so the input is literal.
-        escaped = search.replace("%", "\\%").replace("_", "\\_")
+        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         clauses[-1] = clauses[-1].replace(" LIKE ?", " LIKE ? ESCAPE '\\'")
         args.extend([f"%{escaped}%"] * 3)
     if priority != "All":

@@ -31,3 +31,11 @@ def test_demo_filter(tmp_path):
     upsert(demo_records(), path)
     assert len(list_threats(path, demo=True)) == 4
     assert not list_threats(path, demo=False)
+
+
+def test_search_treats_backslashes_and_like_wildcards_literally(tmp_path):
+    path = tmp_path / 'search.db'
+    for index, title in enumerate([r'VPN\_100%', 'VPN_100%', r'VPN\X100Y']):
+        upsert([ThreatRecord(str(index), title, 'Test', 'https://example.org', '', '')], path)
+    assert [r.title for r in list_threats(path, search=r'VPN\_100%')] == [r'VPN\_100%']
+    assert len(list_threats(path, search='%')) == 2

@@ -31,3 +31,11 @@ def test_recency_filter_with_fixture_clock():
     fixed = datetime.combine(__import__('datetime').date.today(), datetime.min.time(), timezone.utc)
     assert len(recent(items, 1, now=fixed)) == 2
     assert len(recent(items, 8, now=fixed)) == 4
+
+
+def test_recency_excludes_future_records():
+    from datetime import datetime, timezone
+    from signalforge.models import ThreatRecord
+    from signalforge.reports import recent
+    record = ThreatRecord('future', 'Future story', 'Test', 'https://example.org', '2099-01-01', '')
+    assert recent([record], now=datetime(2026, 10, 26, tzinfo=timezone.utc)) == []

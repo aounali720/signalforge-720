@@ -61,3 +61,19 @@ def test_epss_enrichment():
     out = enrich_epss(session, [r])
     assert out[0].epss == 0.36
     assert session.calls == 1
+
+
+@pytest.mark.parametrize('url', ['https://[invalid', 'https://example.com:bad/',
+                                 'https://example.com:99999/', 'https://exa mple.com/',
+                                 'https://example.com\\@evil.test/', 'https://example.com/\npath'])
+def test_safe_url_rejects_malformed_links_without_crashing(url):
+    assert safe_url(url) == ''
+
+
+def test_missing_rss_date_does_not_invent_freshness():
+    from signalforge.reports import recent
+    records = parse_rss('<rss><channel><item><title>Unknown date</title>'
+                        '<link>https://example.org</link></item></channel></rss>', 'Test')
+    assert len(records) == 1
+    assert records[0].published_at == ''
+    assert recent(records) == []

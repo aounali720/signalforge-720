@@ -6,14 +6,15 @@ from .models import ThreatRecord
 
 def recent(records: list[ThreatRecord], days: int = 3, *, now: datetime | None = None) -> list[ThreatRecord]:
     """Published-window filter; a daily brief should not recycle old high-score items."""
-    cutoff = ((now or datetime.now(timezone.utc)).astimezone(timezone.utc) - timedelta(days=days)).date()
+    today = (now or datetime.now(timezone.utc)).astimezone(timezone.utc).date()
+    cutoff = today - timedelta(days=days)
     retained = []
     for item in records:
         try:
             published = datetime.fromisoformat(item.published_at.replace("Z", "+00:00")).date()
         except ValueError:
             continue
-        if published >= cutoff:
+        if cutoff <= published <= today:
             retained.append(item)
     return retained
 
