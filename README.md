@@ -4,7 +4,7 @@
 
 ![SignalForge 720 cover](assets/portfolio-cover.png)
 
-[![Python](https://img.shields.io/badge/Python-3.11%2B-3676AB)](https://www.python.org/) ![Scope](https://img.shields.io/badge/scope-SOC%20%7C%20Detection%20%7C%20GRC-1785AC) ![Tests](https://img.shields.io/badge/tests-pytest-47B386) ![License](https://img.shields.io/badge/license-MIT-lightgrey)
+[![Python](https://img.shields.io/badge/Python-3.12-3676AB)](https://www.python.org/) ![Scope](https://img.shields.io/badge/scope-SOC%20%7C%20Detection%20%7C%20GRC-1785AC) ![Tests](https://img.shields.io/badge/tests-pytest-47B386) ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 > **Purpose:** an independent, single-user *learning system*. It does not prove that an organization is compromised, validate vulnerable asset versions, certify ISO/NIST compliance, or replace vendor advisories. Scoring is an explainable exercise, **not CVSS**. The lab is fictional and always labeled.
 
@@ -35,15 +35,15 @@ Architecture details: [docs/architecture.md](docs/architecture.md)
 
 ## Launch on Windows 11
 
-Open PowerShell in a directory containing this project. Python **3.11+** is required. The app is not packaged into an EXE.
+Open PowerShell in a directory containing this project. Python **3.12** is the tested, locked baseline. The app is not packaged into an EXE.
 
 ```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.lock
 .\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-Open **http://localhost:8501**. If `py -3.11` is not installed, use an installed Python 3.12 interpreter.
+Open **http://localhost:8501**. Install an official Python 3.12 interpreter if `py -3.12` is unavailable.
 
 > On Windows with App Control policies blocking binary extensions, a fresh venv with an approved, official CPython version may be necessary. Do not disable system security controls to run the project.
 
@@ -83,9 +83,9 @@ Copy `.env.example` to `.env` and set **either** `OPENAI_API_KEY` **or** `ANTHRO
 ### Linux/macOS
 
 ```bash
-python3 -m venv .venv
+python3.12 -m venv .venv
 source .venv/bin/activate
-python -m pip install -r requirements.txt
+python -m pip install -r requirements.lock
 streamlit run app.py
 ```
 
@@ -120,3 +120,30 @@ tests/                          Offline automated tests
 ```
 
 **Ethical use:** Independently developed; no endorsement by CISA, FIRST, ISO, NIST, MITRE, or source publishers. Observe API/feed conditions. Names of products, vulnerabilities and adversary techniques in training material are learning prompts only. MIT License; see [SECURITY.md](SECURITY.md).
+
+## Development and maintenance
+
+Use Python 3.12 and install `python -m pip install -r requirements-dev.lock`.
+Run `python -m pytest -q`, `python -m ruff check --select E9,F63,F7,F82 .`, and
+`python -m pip check`. Tests are offline and include Streamlit interactions with a temporary database.
+The reviewed snapshot has 36 tests; see [review notes](docs/review-notes.md) for changes and verification limits.
+
+`requirements.txt` and `requirements-dev.txt` express supported dependency ranges;
+`requirements.lock` and `requirements-dev.lock` pin the resolved Python 3.12 environment.
+Docker and CI use the locks. For a dependency update, resolve the range files in a clean
+Python 3.12 environment, regenerate both lock files (keeping runtime packages separate from
+pytest/ruff), inspect the diff, run tests, and audit the resulting runtime lock.
+Do not generate locks from an environment containing unrelated tooling.
+For the audit, install `pip-audit==2.10.0` in a separate tooling environment and run
+`python -m pip_audit -r requirements.lock`. Exact pins improve repeatability; they are
+not artifact hashes or a guarantee against future vulnerabilities.
+
+The scheduled public-source workflow produces a downloadable, seven-day artifact and
+never commits data or publishes to social media. It runs without paid API credentials.
+Feed failures are reported separately; a successful partial sync is not proof that every feed worked.
+CI uses read-only repository permissions and pinned action revisions.
+
+Local `.env`, SQLite files, private inventories, and newly generated reports are ignored by
+Git and excluded from Docker builds. The two tracked `reports/demo-case.*` files contain
+fictional examples only. Review `git status` and staged diffs before pushing; ignore rules
+do not protect files already tracked or files placed in arbitrary locations.

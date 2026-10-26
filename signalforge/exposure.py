@@ -48,7 +48,8 @@ def parse_csv(content: str, *, demo: bool = False) -> list[AssetRecord]:
     if len(content.encode("utf-8")) > 1_000_000:
         raise ValueError("Inventory CSV must not exceed 1 MB")
     reader = csv.DictReader(StringIO(content.lstrip("\ufeff")))
-    if not reader.fieldnames or any(k not in reader.fieldnames for k in FIELDS):
+    if (not reader.fieldnames or len(set(reader.fieldnames)) != len(reader.fieldnames)
+            or any(k not in reader.fieldnames for k in FIELDS)):
         raise ValueError("CSV headers must include: " + ", ".join(FIELDS))
     result: list[AssetRecord] = []
     seen: set[str] = set()
@@ -67,7 +68,7 @@ def parse_csv(content: str, *, demo: bool = False) -> list[AssetRecord]:
             raise ValueError(f"Invalid criticality on line {line}; use Low, Medium, or High")
         if flag not in ("true", "false", "yes", "no", "1", "0"):
             raise ValueError(f"Invalid internet_exposed flag on line {line}")
-        if any(not _CVE.fullmatch(cve) for cve in cves.split(";") if cve.strip()):
+        if any(not _CVE.fullmatch(cve.strip()) for cve in cves.split(";") if cve.strip()):
             raise ValueError(f"Invalid CVE syntax on line {line}")
         if any(len((row[field] or "")) > 180 for field in ("product", "environment", "owner")):
             raise ValueError(f"Oversized CSV field on line {line}")

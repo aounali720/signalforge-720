@@ -32,3 +32,11 @@ def test_missing_cves_never_fuzzy_match_product_name():
     from signalforge.prioritize import score
     record = score(ThreatRecord("X", "Fictional VPN gateway", "Unit test", "https://example.com", "2026-10-01", "test"))
     assert find_matches([record], assets) == []
+
+
+def test_csv_accepts_whitespace_between_cves_and_rejects_duplicate_headers():
+    header = 'asset_id,product,environment,internet_exposed,criticality,known_cves,owner'
+    row = 'A1,VM,Lab,true,High,CVE-2099-0001; CVE-2099-0002,Analyst'
+    assert parse_csv(header + '\n' + row)[0].cves() == ('CVE-2099-0001', 'CVE-2099-0002')
+    with pytest.raises(ValueError):
+        parse_csv(header + ',owner\n' + row + ',Other')

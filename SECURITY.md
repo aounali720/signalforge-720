@@ -22,3 +22,12 @@ Please report potential issues privately through the GitHub repository security 
 - ATT&CK hypotheses are education prompts, not tested detection rules or confirmed TTPs.
 - JSON evidence hashes are unkeyed SHA-256 digests, not cryptographic signing or compliant audit evidence.
 - CSV outputs sanitize formula-like text from untrusted feeds to reduce spreadsheet formula-injection risk.
+
+## Credential handling and dependency updates
+
+- Copy `.env.example` to a local `.env` only when configuring optional providers. Keep key fields empty in tracked examples; use GitHub encrypted secrets for any future credentialed automation.
+- Provider errors shown in the UI intentionally omit response text, which could echo sensitive request material. No API keys are stored in the SQLite database by the application.
+- Optional writing calls send selected public-source titles and excerpts to the chosen provider; optional artwork sends the entered headline. Do not put private incident details or secrets into these inputs. Provider instructions mitigate prompt injection but cannot guarantee trustworthy output.
+- Dependency locks target Python 3.12. Keep them updated and run the CI vulnerability audit; do not bypass a finding without documenting its applicability and mitigation.
+- Secret-pattern scanning is a heuristic. A clean scan cannot establish absence of all sensitive information. If a credential was committed, revoke it first; deleting it or adding ignore rules does not remove it from Git history.
+- Unknown RSS publication dates are retained as unknown and excluded from dated briefs. Future-dated records are also excluded from briefs.

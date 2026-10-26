@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from io import BytesIO
 import json
-import os
 from pathlib import Path
+import requests
 import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
@@ -15,7 +15,7 @@ from signalforge.database import STATUSES, init_db, list_threats, save_triage, u
 from signalforge.demo import demo_records
 from signalforge.image_ai import openai_concept_image
 from signalforge.reports import digest, linkedin_template, pick, recent
-from signalforge.sources import collect
+from signalforge.sources import collect, safe_url
 from signalforge.exposure import parse_csv, save_assets, list_assets, find_matches, sample_assets
 from signalforge.detection import hypotheses, playbook
 from signalforge.evidence import case_id, evidence_packet, packet_markdown, packet_json
@@ -48,7 +48,7 @@ with st.sidebar:
     use_kev = st.checkbox("CISA KEV", True)
     use_news = st.checkbox("Security news feeds", True)
     use_epss = st.checkbox("FIRST EPSS probability", True)
-    if st.button("↻ Sync live sources", type="primary", use_container_width=True):
+    if st.button("↻ Sync live sources", type="primary", width="stretch"):
         with st.spinner("Retrieving public source metadata…"):
             records, errors = collect(days=period, use_kev=use_kev, use_rss=use_news, use_epss=use_epss)
             count = upsert(records)
@@ -58,13 +58,18 @@ with st.sidebar:
             st.info("No records in the selected look-back window.")
         for error in errors:
             st.warning(error)
-    if st.button("Load 720 signature lab", use_container_width=True):
+    if st.button("Load 720 signature lab", width="stretch"):
         upsert(demo_records())
         save_assets(sample_assets())
         st.success("4 synthetic cases and 3 fictional lab assets added.")
     st.divider()
     st.caption("Version " + __version__ + " · API keys stay in your environment; do not commit .env")
     st.caption("Priority is a teaching heuristic, NOT CVSS, and does not establish impact on your assets.")
+
+if st.session_state.pop("triage_saved", False):
+    st.success("Triage decision saved locally. Queue and evidence updated.")
+if "assets_imported" in st.session_state:
+    st.success(f"Imported {st.session_state.pop('assets_imported')} asset declarations.")
 
 all_records = list_threats()
 real_records = [r for r in all_records if not r.is_demo]
@@ -75,7 +80,7 @@ if not all_records:
     st.info("No records yet. Choose **Sync live sources** or **Load 720 signature lab** on the left to begin.")
 
 metrics = st.columns(5)
-metrics[0].metric("Total records", len(all_records))
+metrics[0].metric("Stored records", len(all_records), help="Includes clearly labeled synthetic training scenarios.")
 metrics[1].metric("CISA KEV", sum(r.kev and not r.is_demo for r in all_records))
 metrics[2].metric("High priority", sum(r.priority == "High" and not r.is_demo for r in all_records))
 metrics[3].metric("Under investigation", sum(r.status == "Investigating" for r in all_records))
@@ -88,6 +93,9 @@ overview, queue, exposure, detection, binder, briefing, creator, methodology = s
 
 with overview:
     st.subheader("Intelligence at a glance")
+    st.caption(f"{len(real_records)} public-source records · {demo_count} training scenarios · Refresh runs only when requested.")
+    if not all_records:
+        st.markdown("**Start your analyst workflow:** load the signature lab → triage a case → review declared assets → export an evidence packet.")
     if all_records:
         left, right = st.columns([1, 1])
         with left:
@@ -107,7 +115,7 @@ with overview:
             st.dataframe(pd.DataFrame([{
                 "Priority": r.priority, "Score": r.priority_score, "Title": r.title,
                 "Source": r.source, "Published": r.published_at[:10], "Advisory": r.url
-            } for r in display]), hide_index=True, use_container_width=True,
+            } for r in display]), hide_index=True, width="stretch",
                 column_config={"Advisory": st.column_config.LinkColumn("Source", display_text="Open source")})
         else:
             st.info("Live data not loaded; training records are not included in this overview.")
@@ -131,7 +139,7 @@ with queue:
             "Title": r.title, "CVE": r.cve or "—", "Publisher": r.source,
             "Published": r.published_at[:10], "Status": r.status, "Evidence": r.url
         } for r in visible])
-        st.dataframe(frame, hide_index=True, use_container_width=True,
+        st.dataframe(frame, hide_index=True, width="stretch",
                      column_config={"Evidence": st.column_config.LinkColumn("Evidence", display_text="View")})
         options = {f"{r.title[:90]} · {r.source} · {r.key[-8:]}": r for r in visible}
         selection = st.selectbox("Open a record", list(options))
@@ -143,7 +151,9 @@ with queue:
             st.subheader(record.title)
             st.caption(f"Case ID: {case_id(record)}")
             st.write(record.summary or "No excerpt provided by publisher.")
-            st.markdown(f"**Source:** [{record.source}]({record.url})")
+            if safe_url(record.url):
+                st.link_button("Open original source", safe_url(record.url))
+            st.caption("Publisher: " + record.source)
             st.markdown(f"**Published:** `{record.published_at}` · **CVE:** `{record.cve or 'not provided'}`")
             st.markdown(f"**CISA KEV:** `{'Simulated for training' if record.is_demo and record.kev else record.kev}` · **EPSS:** `{f'{record.epss:.4f}' if record.epss is not None else 'not available'}`")
             st.markdown(f"**Heuristic priority:** **{record.priority}** ({record.priority_score}/100)")
@@ -155,7 +165,8 @@ with queue:
                 notes = st.text_area("Analyst observations / next steps", value=record.analyst_notes, height=150, max_chars=5000)
                 if st.form_submit_button("Save triage decision", type="primary"):
                     if save_triage(record.key, status, notes):
-                        st.success("Saved locally. Refresh filters to view the updated queue.")
+                        st.session_state["triage_saved"] = True
+                        st.rerun()
                     else:
                         st.error("Record is no longer available")
     else:
@@ -175,7 +186,8 @@ with exposure:
             try:
                 parsed = parse_csv(upload.getvalue().decode("utf-8-sig"), demo=mark_demo)
                 count_assets = save_assets(parsed)
-                st.success(f"Imported {count_assets} asset declarations. Reload the page to inspect.")
+                st.session_state["assets_imported"] = count_assets
+                st.rerun()
             except (ValueError, UnicodeDecodeError) as exc:
                 st.error(str(exc))
     with y:
@@ -187,12 +199,12 @@ with exposure:
             "Asset": a.asset_id, "Product": a.product, "Environment": a.environment,
             "Internet exposure declared": a.internet_exposed, "Criticality": a.criticality,
             "Declared CVEs": a.known_cves or "—", "Training fixture": a.is_demo
-        } for a in asset_list]), hide_index=True, use_container_width=True)
+        } for a in asset_list]), hide_index=True, width="stretch")
         matches = find_matches(all_records, asset_list)
         if matches:
             st.markdown("**Investigations requiring verification**")
             st.dataframe(pd.DataFrame([{k: v for k,v in m.items() if k not in ("source", "warning")}
-                                      for m in matches]), hide_index=True, use_container_width=True)
+                                      for m in matches]), hide_index=True, width="stretch")
             st.caption("The 0–100 review score is a teaching heuristic based on advisory priority, declared internet exposure and declared criticality; it is NOT a CVSS or risk rating.")
         else:
             st.info("No exact declared CVE intersections. This is not proof that any asset is safe.")
@@ -239,10 +251,10 @@ with binder:
         left, right = st.columns(2)
         with left:
             st.download_button("Export Markdown for analyst review", document,
-                               file_name=f"{case_id(chosen_case)}_evidence.md", mime="text/markdown", use_container_width=True)
+                               file_name=f"{case_id(chosen_case)}_evidence.md", mime="text/markdown", width="stretch")
         with right:
             st.download_button("Export JSON + SHA-256 digest", packet_json(packet),
-                               file_name=f"{case_id(chosen_case)}_evidence.json", mime="application/json", use_container_width=True)
+                               file_name=f"{case_id(chosen_case)}_evidence.json", mime="application/json", width="stretch")
         st.caption("SHA-256 supports local integrity comparison only; this is not a digital signature, proof of review, or a formal compliance assessment.")
     else:
         st.info("Load synthetic cases or sync public sources first.")
@@ -257,10 +269,10 @@ with briefing:
     count = st.slider("Maximum records", 1, 15, 7)
     brief = digest(candidates, count)
     st.markdown(brief)
-    st.download_button("Download Markdown brief", brief, file_name="signalforge_daily_brief.md", mime="text/markdown", use_container_width=True)
+    st.download_button("Download Markdown brief", brief, file_name="signalforge_daily_brief.md", mime="text/markdown", width="stretch")
     if candidates:
         export = safe_csv([r.to_dict() for r in pick(candidates, count)])
-        st.download_button("Export selected records as CSV", export, file_name="signalforge_triage.csv", mime="text/csv", use_container_width=True)
+        st.download_button("Export selected records as CSV", export, file_name="signalforge_triage.csv", mime="text/csv", width="stretch")
 
 with creator:
     st.subheader("Publishable analysis · review required")
@@ -274,12 +286,18 @@ with creator:
              format_func=lambda key: f"{index_by_key[key].title[:90]} — {index_by_key[key].source}", max_selections=5)
         chosen = [index_by_key[k] for k in selected_keys]
         provider = st.selectbox("Writing engine", ["Offline template (free)", "OpenAI", "Claude"])
+        draft_context = (provider, tuple((r.key, r.title, r.summary, r.url, r.is_demo, r.priority) for r in chosen))
+        if st.session_state.get("draft_context") != draft_context:
+            st.session_state.pop("tp_post", None)
+        st.session_state["draft_context"] = draft_context
+        if not provider.startswith("Offline"):
+            st.caption("Selected source titles and excerpts will be sent to the writing provider. Review sensitive text before generating.")
         if st.button("Generate source-grounded LinkedIn draft", disabled=not chosen, type="primary"):
             try:
                 post = linkedin_template(chosen) if provider.startswith("Offline") else ai_linkedin(chosen, provider)
                 st.session_state["tp_post"] = post
-            except Exception as exc:
-                st.error(f"Generation failed: {type(exc).__name__}: {exc}")
+            except (ValueError, RuntimeError, requests.RequestException, KeyError, IndexError):
+                st.error("Draft generation failed. Check provider credentials, model availability, and network access. Provider details are withheld to protect credentials.")
         if "tp_post" in st.session_state:
             st.text_area("Review and edit before publishing", key="tp_post", height=330)
             st.download_button("Download LinkedIn post", st.session_state["tp_post"], file_name="linkedin_draft.txt", mime="text/plain")
@@ -289,6 +307,11 @@ with creator:
         headline = st.text_input("Card headline", value=default_title[:100])
         label = st.selectbox("Graphic style", ["Signal trace", "Grid pulse", "Orbit rings"])
         st.caption("Visual motifs are deterministically varied using a fingerprint of each headline and the 720 studio mark.")
+        graphic_context = (headline, label, tuple((r.key, r.is_demo) for r in chosen))
+        if st.session_state.get("graphic_context") != graphic_context:
+            st.session_state.pop("tp_graphic", None)
+            st.session_state.pop("tp_graphic_label", None)
+        st.session_state["graphic_context"] = graphic_context
         if st.button("Make clean editorial card"):
             st.session_state["tp_graphic"] = render_cover(headline, label=label, demo=any(r.is_demo for r in chosen))
             st.session_state["tp_graphic_label"] = "Original editorial design (not an AI photograph)"
@@ -296,10 +319,10 @@ with creator:
             try:
                 st.session_state["tp_graphic"] = openai_concept_image(headline)
                 st.session_state["tp_graphic_label"] = "AI-generated concept artwork — not documentary evidence"
-            except Exception as exc:
-                st.error(f"Image generation failed: {type(exc).__name__}: {exc}")
+            except (ValueError, RuntimeError, requests.RequestException, KeyError, IndexError):
+                st.error("Image generation failed. Check provider credentials, model availability, and network access. Provider details are withheld to protect credentials.")
         if "tp_graphic" in st.session_state:
-            st.image(st.session_state["tp_graphic"], caption=st.session_state.get("tp_graphic_label", ""), use_container_width=True)
+            st.image(st.session_state["tp_graphic"], caption=st.session_state.get("tp_graphic_label", ""), width="stretch")
             st.download_button("Download PNG artwork", st.session_state["tp_graphic"], file_name="signalforge_post_art.png", mime="image/png")
     else:
         st.info("Sync live sources first, or explicitly enable synthetic training records.")

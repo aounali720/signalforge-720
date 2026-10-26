@@ -34,7 +34,13 @@ def clean_text(value: str, max_len: int = 1400) -> str:
 
 def safe_url(value: str) -> str:
     """Only allow HTTP(S) URLs; canonicalize by removing tracking fragments."""
-    parsed = urlparse((value or "").strip())
+    try:
+        parsed = urlparse((value or "").strip())
+        if not parsed.hostname or any(c.isspace() or ord(c) < 32 for c in value) or "\\" in value:
+            return ""
+        _ = parsed.port  # Reject malformed or out-of-range ports.
+    except ValueError:
+        return ""
     if parsed.scheme not in ("https", "http") or not parsed.netloc or parsed.username or parsed.password:
         return ""
     return urlunparse((parsed.scheme, parsed.netloc.lower(), parsed.path, "", parsed.query, ""))
@@ -116,7 +122,8 @@ def parse_rss(payload: bytes | str, source: str, limit: int = 30) -> list[Threat
             else:
                 published = parsedate_to_datetime(timestamp).astimezone(timezone.utc).isoformat()
         except (ValueError, TypeError, OverflowError):
-            published = datetime.now(timezone.utc).isoformat()
+            # Unknown publication dates must not masquerade as fresh intelligence.
+            published = ""
         records.append(score(ThreatRecord(
             key="rss:" + sha256(url.encode("utf-8")).hexdigest()[:24],
             title=title, source=source, url=url, published_at=published,
