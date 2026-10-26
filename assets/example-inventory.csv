@@ -1,0 +1,4 @@
+asset_id,product,environment,internet_exposed,criticality,known_cves,owner
+SF720-LAB-VPN,Fictional VPN gateway,Home lab,true,High,CVE-2099-0001,SOC trainee
+SF720-LAB-APP,Imaginary application package,Isolated VM,false,Medium,CVE-2099-0002,SOC trainee
+SF720-LAB-WIN,Windows telemetry workstation,Detection lab,false,Low,,SOC trainee

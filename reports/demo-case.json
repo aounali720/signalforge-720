@@ -1,0 +1,72 @@
+{
+  "schema": "signalforge720.case.1",
+  "case_id": "SF720-AD2E09BA",
+  "created_utc": "2026-10-26T00:14:45.832927+00:00",
+  "classification": "SYNTHETIC TRAINING",
+  "source": {
+    "title": "[DEMO] Fictional VPN appliance authentication bypass",
+    "publisher": "Training Scenario",
+    "url": "https://example.com/training-scenario",
+    "published_at": "2026-10-25",
+    "cve": "CVE-2099-0001",
+    "cisa_kev": true,
+    "epss": null
+  },
+  "triage": {
+    "status": "New",
+    "analyst_notes": "",
+    "heuristic_priority": "High",
+    "priority_score": 82,
+    "rationale": "In CISA Known Exploited Vulnerabilities catalog (+70); CISA reports known ransomware campaign use (+12)"
+  },
+  "declared_inventory_intersections": [
+    {
+      "case_id": "SF720-AD2E09BA",
+      "asset_id": "SF720-LAB-VPN",
+      "asset_product": "Fictional VPN gateway",
+      "declared_cve": "CVE-2099-0001",
+      "headline": "[DEMO] Fictional VPN appliance authentication bypass",
+      "priority": "High",
+      "review_score": 88,
+      "internet_exposed": true,
+      "criticality": "High",
+      "is_demo": true,
+      "source": "https://example.com/training-scenario",
+      "warning": "Inventory-declared CVE match; NOT confirmed affected version or compromise"
+    }
+  ],
+  "detection_hypotheses": [
+    {
+      "technique": "T1190 – Exploit Public-Facing Application",
+      "telemetry": "Reverse proxy/WAF and application authentication logs",
+      "analyst_question": "Is there suspicious unauthenticated traffic to an exposed service?"
+    }
+  ],
+  "suggested_control_evidence": [
+    {
+      "reference": "ISO/IEC 27001:2022 A.8.8",
+      "topic": "Management of technical vulnerabilities",
+      "evidence_needed": "Verify applicability, patch/mitigation evidence, asset scope"
+    },
+    {
+      "reference": "ISO/IEC 27001:2022 A.8.16",
+      "topic": "Monitoring activities",
+      "evidence_needed": "Document monitoring coverage, alerts and investigation outcomes"
+    },
+    {
+      "reference": "NIST CSF 2.0 — Identify / Protect / Detect / Respond",
+      "topic": "High-level functions, not scored compliance",
+      "evidence_needed": "Link owner, inventory, mitigations, detection and incident decisions"
+    }
+  ],
+  "analyst_checklist": [
+    "Read original vendor/CISA advisory and record retrieval date",
+    "Validate owned asset/product versions before claiming exposure",
+    "Confirm vulnerability/remediation status with asset owner",
+    "Assess useful telemetry and validate detection hypotheses",
+    "Preserve relevant logs and document analysis limitations",
+    "Request peer review before issuing any external statement"
+  ],
+  "disclaimer": "No automated exploitation, vulnerability validation, compliance certification, or incident attribution performed.",
+  "sha256_data": "44bea3cf4878b547179f32ce2e54000fa77b81a04d26718effd8404d91e52503"
+}
