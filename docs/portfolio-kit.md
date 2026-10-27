@@ -18,11 +18,11 @@ Use this after running the project yourself. Adjust the wording to match the wor
 
 The project also supports optional AI drafting, which requires review before use. Keep claims about production deployments, real investigations, detection accuracy, or audit results separate from what this lab demonstrates.
 
-## LinkedIn draft
+## Short project write-up
 
-SignalForge 720 is a Python and Streamlit project for practicing the work that follows a security advisory.
+I built SignalForge 720 to practice the work that comes after seeing a security advisory. It's a Python/Streamlit app with a local SQLite database.
 
-It brings CISA KEV entries, EPSS data, and publisher feeds into one queue. From there, an analyst can save triage notes, compare CVE IDs with a declared lab inventory, work through a detection hypothesis, and export the case as Markdown or JSON.
+The app puts CISA KEV entries, EPSS data and security news in one queue. From there, an analyst can save triage notes, compare CVE IDs with a declared lab inventory, work through a detection hypothesis, and export the case as Markdown or JSON.
 
 The offline demo has four fictional cases and three lab assets. That makes it possible to walk through the app without API keys or live feeds. Demo records stay labeled throughout the workflow.
 
