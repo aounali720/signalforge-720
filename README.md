@@ -1,10 +1,10 @@
 # SignalForge 720
 
-A local SOC practice lab by [@aounali720](https://github.com/aounali720). Built with Python, Streamlit and SQLite.
+A small SOC practice app I built with Python, Streamlit and SQLite.
 
-SignalForge collects CISA KEV entries and security news, keeps investigation notes, and exports case reports. You can also load four fictional cases and three lab assets to try it without network access or API keys.
+It pulls public vulnerability advisories and security news into a review queue, saves case notes and exports reports. There are also four fictional cases and three example assets, so I can demonstrate the workflow without live feeds or API keys.
 
-I use this project to practice what comes after reading an advisory: deciding what needs attention, checking an inventory, choosing useful logs, and writing down the findings. The `720` name comes from my GitHub handle.
+I wanted something to practice the work *after* an advisory arrives: decide what to check first, compare it with a sample inventory, list useful logs and write up the result. The `720` is from my GitHub username.
 
 This is a single-user learning project. Inventory matches are based on CVEs you enter; they do not verify vulnerable versions. Detection worksheets suggest things to investigate. The app does not scan hosts or confirm an incident.
 
@@ -52,7 +52,7 @@ Compose binds to `127.0.0.1:8501`. The app has no login system; keep it local or
 
 The [demo walkthrough](docs/demo-walkthrough.md) covers these steps in more detail. There is also a [sample inventory](assets/example-inventory.csv) and a [sample case report](docs/example-synthetic-case.md).
 
-## What is in the dashboard
+## What I built
 
 | Tab | Use it to |
 | --- | --- |
